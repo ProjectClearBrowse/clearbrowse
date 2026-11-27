@@ -291,9 +291,13 @@
     });
   }
 
+  // 要素は削除せず、非表示にする(サイト側のプログラムが、その要素を参照して動いている場合に、エラーで止まることを避けるため)
   function removeEl(el, reason) {
     note(reason || 'overlay', el);
-    try { el.remove(); } catch (e) { return; }
+    try {
+      el.style.setProperty('display', 'none', 'important');
+      el.setAttribute('data-pab-gone', '1');
+    } catch (e) { return; }
     report('overlay');
   }
 
@@ -337,6 +341,8 @@
 
   const scan = safe('scan', function scan() {
     if (off || !document.body) return;
+    // 大きさのない枠(非表示の計測用フレームなど)の中では、見た目による判定を行わない
+    if (window.innerWidth < 100 || window.innerHeight < 100) return;
     const cands = new Set();
     for (const c of Array.from(document.body.children)) {
       cands.add(c);
