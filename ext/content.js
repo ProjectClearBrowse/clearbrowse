@@ -1,0 +1,378 @@
+// クリアブラウズ: 拡張機能の隔離環境(ISOLATED world)で動くスクリプト。
+// ・サイトごとの ON/OFF を反映
+// ・MAIN world からのブロック通知を background へ中継
+// ・透明オーバーレイ(クリック乗っ取り)と、画面隅に固定表示される浮遊広告の検出・削除
+// ・ユーザーが「広告ピッカー」で選んだ要素の非表示
+(() => {
+  'use strict';
+
+  const root = document.documentElement;
+
+  function topHostname() {
+    if (window.top === window) return location.hostname;
+    const ao = location.ancestorOrigins;
+    if (ao && ao.length) {
+      try { return new URL(ao[ao.length - 1]).hostname; } catch (e) { /* ignore */ }
+    }
+    return location.hostname;
+  }
+
+  const normHost = (h) => h.replace(/^www\./, '');
+  const HOST = normHost(topHostname());
+
+  function isDisabledFor(host, list) {
+    return list.some((d) => host === d || host.endsWith('.' + d));
+  }
+
+  let off = false;
+  const FEATURES = { popup: true, overlay: true, floating: true, inline: true, ws: true };
+  const featureOn = (k) => FEATURES[k] !== false;
+
+  const report = (kind) => {
+    try { chrome.runtime.sendMessage({ type: 'blocked', kind }); } catch (e) { /* ignore */ }
+  };
+
+  // エラーは端末内のログにだけ記録する(外部には送信しない)
+  const reportError = (where, e) => {
+    try {
+      chrome.runtime.sendMessage({
+        type: 'error',
+        src: where,
+        message: String((e && e.message) || e),
+        stack: String((e && e.stack) || ''),
+      });
+    } catch (x) { /* ignore */ }
+  };
+  const safe = (where, fn) => (...args) => {
+    try { return fn(...args); } catch (e) { reportError(where, e); return undefined; }
+  };
+
+  // --- MAIN world からの通知を中継 ---
+  window.addEventListener('message', (ev) => {
+    if (ev.source !== window) return;
+    const d = ev.data;
+    if (!d || d.__pab !== true || typeof d.kind !== 'string') return;
+    if (d.kind === 'error') {
+      try {
+        chrome.runtime.sendMessage({ type: 'error', src: 'page-hook', message: d.message, stack: d.stack });
+      } catch (e) { /* ignore */ }
+    } else {
+      report(d.kind);
+    }
+  });
+
+  // --- 透明オーバーレイ判定 ---
+  function isClear(color) {
+    if (color === 'transparent') return true;
+    return /^rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*0(\.0+)?\s*\)$/.test(color);
+  }
+
+  function isSuspectOverlay(el) {
+    if (!(el instanceof HTMLElement)) return false;
+    if (el === document.body || el === root) return false;
+    const cs = getComputedStyle(el);
+    if (cs.position !== 'fixed' && cs.position !== 'absolute') return false;
+    const r = el.getBoundingClientRect();
+    if (r.width < window.innerWidth * 0.8 || r.height < window.innerHeight * 0.8) return false;
+    const z = parseInt(cs.zIndex, 10);
+    if (!(z >= 1000)) return false;
+    const see = parseFloat(cs.opacity) <= 0.05 ||
+      (isClear(cs.backgroundColor) && cs.backgroundImage === 'none');
+    if (!see) return false;
+    if (el.textContent && el.textContent.trim()) return false;
+    if (el.querySelector('video,canvas,img,svg,input,button,form,a,audio,picture,select,textarea')) return false;
+    return true;
+  }
+
+  // --- 浮遊広告判定(画面の隅に固定表示される広告) ---
+  function isExternal(url) {
+    try { return new URL(url, location.href).origin !== location.origin; } catch (e) { return false; }
+  }
+
+  function isFloatingAd(el) {
+    if (!(el instanceof HTMLElement)) return false;
+    if (el === document.body || el === root) return false;
+    const cs = getComputedStyle(el);
+    if (cs.position !== 'fixed') return false;
+    if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+    const r = el.getBoundingClientRect();
+    if (r.width < 60 || r.height < 30) return false;
+    // 画面を大きく覆うもの(モーダル等)は対象外
+    if (r.width > window.innerWidth * 0.9 && r.height > window.innerHeight * 0.5) return false;
+    // 画面の端(下・上・左・右)に接していること
+    const edge = r.bottom >= window.innerHeight - 40 || r.top <= 40 ||
+      r.left <= 40 || r.right >= window.innerWidth - 40;
+    if (!edge) return false;
+
+    const frames = el.matches('iframe') ? [el] : Array.from(el.querySelectorAll('iframe'));
+    if (frames.some((f) => f.src && isExternal(f.src))) return true;
+
+    const hasMedia = !!el.querySelector('img,video,canvas,iframe,picture') || el.matches('img,video,canvas');
+    if (!hasMedia) return false;
+    const links = el.matches('a[href]') ? [el] : Array.from(el.querySelectorAll('a[href]'));
+    return links.some((a) => isExternal(a.href));
+  }
+
+  // --- ページ内に埋め込まれたバナー広告(標準サイズ・細長いバナー)の判定 ---
+  const AD_SIZES = [
+    [300, 250], [728, 90], [970, 250], [970, 90], [300, 600], [160, 600], [120, 600],
+    [320, 50], [320, 100], [468, 60], [300, 100], [250, 250], [336, 280], [300, 50],
+    [900, 250], [160, 300], [300, 300], [720, 90], [980, 120],
+  ];
+  const SAFE_FRAME = /youtube\.|youtu\.be|vimeo\.|dailymotion\.|recaptcha|hcaptcha|turnstile|challenges\.cloudflare/i;
+
+  function looksLikeBanner(w, h) {
+    if (AD_SIZES.some(([a, b]) => Math.abs(w - a) <= 4 && Math.abs(h - b) <= 4)) return true;
+    return w >= 400 && h >= 40 && h <= 130 && w / h >= 4.5; // 細長いバナー
+  }
+
+  function isInlineAd(el) {
+    if (el.getAttribute('data-pab-hidden') === '1') return false;
+    const r = el.getBoundingClientRect();
+    if (r.width < 40 || r.height < 30) return false;
+    if (!looksLikeBanner(r.width, r.height)) return false;
+    const cs = getComputedStyle(el);
+    if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+    if (el.matches('iframe')) return !SAFE_FRAME.test(el.getAttribute('src') || '');
+    if (el.matches('a[href]')) {
+      if (!isExternal(el.href)) return false;
+      if (!el.querySelector('img,video,canvas,picture,svg')) return false;
+      return el.textContent.trim().length < 40;
+    }
+    if (el.matches('img')) return /^(data:image|blob:)/.test(el.getAttribute('src') || '');
+    if (el.matches('video')) return /^blob:/.test(el.getAttribute('src') || '');
+    return false;
+  }
+
+  function hideInline(el) {
+    let t = el;
+    const r = el.getBoundingClientRect();
+    for (let i = 0; i < 3; i++) {
+      const p = t.parentElement;
+      if (!p || p === document.body || p === root || p.children.length !== 1) break;
+      const pr = p.getBoundingClientRect();
+      if (pr.width > r.width + 80 || pr.height > r.height + 80) break;
+      t = p;
+    }
+    t.style.setProperty('display', 'none', 'important');
+    t.setAttribute('data-pab-hidden', '1');
+    report('overlay');
+  }
+
+  // TrafficJunky の「Ad」ラベル(クラス名・ID が固定)を目印に、広告の枠ごと隠す
+  function effChildren(p) {
+    return Array.from(p.children).filter((c) => c.tagName !== 'STYLE' && c.tagName !== 'SCRIPT');
+  }
+
+  function hideWrapper(w) {
+    let t = w;
+    const r = w.getBoundingClientRect();
+    for (let i = 0; i < 4; i++) {
+      const p = t.parentElement;
+      if (!p || p === document.body || p === root || effChildren(p).length !== 1) break;
+      const pr = p.getBoundingClientRect();
+      if (pr.width > r.width + 80 || pr.height > r.height + 80) break;
+      t = p;
+    }
+    t.style.setProperty('display', 'none', 'important');
+    t.setAttribute('data-pab-hidden', '1');
+    report('overlay');
+  }
+
+  function scanInline() {
+    document.querySelectorAll('iframe, a[href], img[src^="data:image"], img[src^="blob:"], video[src^="blob:"]').forEach((el) => {
+      if (isInlineAd(el)) hideInline(el);
+    });
+    document.querySelectorAll('[class~="t-j-inbanlabel-container"], [id^="tj-inbanlabel-container"]').forEach((label) => {
+      const w = label.parentElement;
+      if (!w || w === document.body || w === root) return;
+      if (!w.getClientRects().length) return; // すでに非表示
+      hideWrapper(w);
+    });
+  }
+
+  function removeEl(el) {
+    try { el.remove(); } catch (e) { return; }
+    report('overlay');
+  }
+
+  function applyFlagAttrs() {
+    for (const k of ['popup', 'ws']) {
+      root.setAttribute('data-pab-f-' + k, featureOn(k) ? '1' : '0');
+    }
+  }
+
+  const scan = safe('scan', function scan() {
+    if (off || !document.body) return;
+    const cands = new Set();
+    for (const c of Array.from(document.body.children)) {
+      cands.add(c);
+      for (const g of Array.from(c.children)) cands.add(g);
+    }
+    for (const c of Array.from(root.children)) cands.add(c);
+    document.querySelectorAll('iframe,ins').forEach((f) => {
+      let e = f;
+      for (let i = 0; i < 6 && e && e !== document.body; i++, e = e.parentElement) cands.add(e);
+    });
+    for (const el of cands) {
+      if ((featureOn('overlay') && isSuspectOverlay(el)) || (featureOn('floating') && isFloatingAd(el))) removeEl(el);
+    }
+    if (featureOn('inline')) scanInline();
+  });
+
+  // クリックの瞬間に透明オーバーレイがあれば、それを消してクリックを無効化
+  function onPointer(ev) {
+    if (off || !featureOn('overlay') || !ev.isTrusted) return;
+    let el = ev.target;
+    for (let i = 0; el && i < 4; i++, el = el.parentElement) {
+      if (isSuspectOverlay(el)) {
+        ev.stopImmediatePropagation();
+        ev.preventDefault();
+        removeEl(el);
+        return;
+      }
+    }
+  }
+  window.addEventListener('mousedown', onPointer, true);
+  window.addEventListener('click', onPointer, true);
+
+  let scheduled = false;
+  const schedule = () => {
+    if (scheduled) return;
+    scheduled = true;
+    requestAnimationFrame(() => { scheduled = false; scan(); });
+  };
+  const mo = new MutationObserver(schedule);
+  mo.observe(root, { childList: true });
+  const attachBody = () => { if (document.body) mo.observe(document.body, { childList: true }); };
+  attachBody();
+  document.addEventListener('DOMContentLoaded', () => { attachBody(); scan(); });
+  setInterval(scan, 1000);
+
+  // --- ユーザーが選んだ要素を隠す ---
+  const hideStyle = document.createElement('style');
+  hideStyle.setAttribute('data-pab', 'user');
+  root.appendChild(hideStyle);
+
+  function applyHidden(map) {
+    if (off) { hideStyle.textContent = ''; return; }
+    const list = (map && map[HOST]) || [];
+    hideStyle.textContent = list.map((s) => `${s}{display:none!important}`).join('\n');
+  }
+
+  // --- 広告ピッカー(トップフレームのみ) ---
+  function cssPath(el) {
+    const parts = [];
+    let e = el;
+    while (e && e !== root) {
+      if (e.id && /^[A-Za-z][\w-]*$/.test(e.id) && !/\d{4,}/.test(e.id) &&
+          document.querySelectorAll('#' + CSS.escape(e.id)).length === 1) {
+        parts.unshift('#' + CSS.escape(e.id));
+        break;
+      }
+      let idx = 1;
+      let s = e;
+      while ((s = s.previousElementSibling)) if (s.tagName === e.tagName) idx++;
+      parts.unshift(`${e.tagName.toLowerCase()}:nth-of-type(${idx})`);
+      e = e.parentElement;
+    }
+    return parts.join('>');
+  }
+
+  let picking = false;
+  function startPicker() {
+    if (picking || window.top !== window) return;
+    picking = true;
+
+    const box = document.createElement('div');
+    box.style.cssText = 'position:fixed;z-index:2147483647;pointer-events:none;border:2px solid #e11d48;background:rgba(225,29,72,.15);display:none';
+    const tip = document.createElement('div');
+    tip.textContent = '消したい広告をクリック(Esc でキャンセル)';
+    tip.style.cssText = 'position:fixed;z-index:2147483647;top:8px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:6px 12px;border-radius:6px;font:13px system-ui,sans-serif;pointer-events:none';
+    root.append(box, tip);
+
+    let cur = null;
+    const choose = (el) => {
+      let target = el;
+      for (let e = el; e && e !== document.body && e !== root; e = e.parentElement) {
+        const p = getComputedStyle(e).position;
+        if (p === 'fixed' || p === 'sticky') target = e;
+      }
+      return target;
+    };
+
+    const onMove = (ev) => {
+      const el = document.elementFromPoint(ev.clientX, ev.clientY);
+      if (!el || el === document.body || el === root) return;
+      cur = choose(el);
+      const r = cur.getBoundingClientRect();
+      Object.assign(box.style, {
+        display: 'block', left: r.left + 'px', top: r.top + 'px',
+        width: r.width + 'px', height: r.height + 'px',
+      });
+    };
+
+    const swallow = (ev) => { ev.preventDefault(); ev.stopImmediatePropagation(); };
+
+    const cleanup = () => {
+      picking = false;
+      window.removeEventListener('mousemove', onMove, true);
+      window.removeEventListener('click', onClick, true);
+      window.removeEventListener('keydown', onKey, true);
+      ['mousedown', 'mouseup', 'pointerdown', 'pointerup'].forEach((t) => window.removeEventListener(t, swallow, true));
+      box.remove();
+      tip.remove();
+    };
+
+    const onClick = (ev) => {
+      swallow(ev);
+      if (!cur) { cleanup(); return; }
+      const sel = cssPath(cur);
+      cur.style.setProperty('display', 'none', 'important');
+      chrome.storage.local.get({ hiddenSelectors: {} }, ({ hiddenSelectors }) => {
+        const list = hiddenSelectors[HOST] || [];
+        if (!list.includes(sel)) list.push(sel);
+        hiddenSelectors[HOST] = list;
+        chrome.storage.local.set({ hiddenSelectors });
+      });
+      cleanup();
+    };
+
+    const onKey = (ev) => { if (ev.key === 'Escape') { swallow(ev); cleanup(); } };
+
+    window.addEventListener('mousemove', onMove, true);
+    window.addEventListener('click', onClick, true);
+    window.addEventListener('keydown', onKey, true);
+    ['mousedown', 'mouseup', 'pointerdown', 'pointerup'].forEach((t) => window.addEventListener(t, swallow, true));
+  }
+
+  chrome.runtime.onMessage.addListener((msg) => {
+    if (msg && msg.type === 'startPicker') startPicker();
+  });
+
+  // --- 設定の読み込みと反映 ---
+  chrome.storage.local.get({ disabledHosts: [], hiddenSelectors: {}, features: {} }, ({ disabledHosts, hiddenSelectors, features }) => {
+    Object.assign(FEATURES, features);
+    applyFlagAttrs();
+    if (isDisabledFor(HOST, disabledHosts)) {
+      off = true;
+      root.setAttribute('data-pab-off', '1');
+    }
+    applyHidden(hiddenSelectors);
+    scan();
+  });
+
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== 'local') return;
+    if (changes.hiddenSelectors) applyHidden(changes.hiddenSelectors.newValue);
+    if (changes.features) {
+      Object.assign(FEATURES, changes.features.newValue || {});
+      applyFlagAttrs();
+    }
+  });
+
+  // 未捕捉のエラーも記録
+  window.addEventListener('error', (e) => {
+    if (e && e.filename && e.filename.indexOf(chrome.runtime.id) !== -1) reportError('content', e.error || e.message);
+  });
+})();

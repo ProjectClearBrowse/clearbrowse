@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>サポート - クリアブラウズ</title>
+  <meta name="description" content="クリアブラウズの不具合の報告方法、手動インストール、よくある不具合と対処です。">
+  <meta name="theme-color" content="#0f766e">
+  <link rel="icon" type="image/png" href="assets/icon48.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap">
+    <a class="logo" href="./"><img src="assets/icon48.png" alt="" width="34" height="34">クリアブラウズ</a>
+    <nav aria-label="メインメニュー"><a href="./">トップ</a><a href="privacy.html">プライバシーポリシー</a></nav>
+  </div>
+</header>
+
+<main class="doc">
+  <div class="wrap">
+    <h1>サポート</h1>
+    <p class="meta">不具合の報告方法と、困ったときの対処です。</p>
+
+    <h2 id="report">不具合を報告する</h2>
+    <p>広告が消えない、ページが崩れる、といったときは、次の手順で報告文を作れます。</p>
+    <ul>
+      <li>ブラウザのツールバーでクリアブラウズのアイコンを押し、「設定・不具合を報告」を開きます。</li>
+      <li>「不具合を報告」の欄に、発生したサイトと症状を書きます。</li>
+      <li>「報告文をコピー」を押して、下の連絡先に貼り付けて送ります。</li>
+    </ul>
+    <p>報告文に入る診断情報は、バージョン、ブラウザの種類、拡張機能が記録したエラーだけです。閲覧したページの履歴は入りません。送信前に、プレビューで内容を確認できます。</p>
+    <p>メール: <a href="mailto:projectclearbrowse@gmail.com">projectclearbrowse@gmail.com</a></p>
+    <p>報告ページ(GitHub): <a href="https://github.com/ProjectClearBrowse/clearbrowse/issues" rel="noopener">https://github.com/ProjectClearBrowse/clearbrowse/issues</a></p>
+    <p class="note">いただいた報告のすべてに返信できるとは限りません。いただいた内容は、広告の検出ルールの改善に使います。</p>
+
+    <h2 id="trouble">よくある不具合と対処</h2>
+    <table>
+      <tbody>
+        <tr><th scope="row">広告が消えない</th><td>アイコンから「広告を選んで消す」を使って、広告を直接クリックしてください。そのサイトでは、次から自動で消えます。</td></tr>
+        <tr><th scope="row">ページの一部が消える</th><td>広告ではない表示が隠れている可能性があります。設定画面で「ページ内のバナー広告を消す」を切るか、そのサイトだけブロックを止めてください。</td></tr>
+        <tr><th scope="row">ログイン用の小窓が開かない</th><td>設定画面で「ポップアップ・新規タブの自動表示を止める」を切るか、そのサイトだけブロックを止めてください。</td></tr>
+        <tr><th scope="row">アイコンが見つからない</th><td>ブラウザ右上のパズルの形のボタンから、クリアブラウズをピン留めしてください。</td></tr>
+        <tr><th scope="row">設定を変えても反映されない</th><td>開いているページを再読み込みしてください。</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="manual">手動でインストールする</h2>
+    <p>ストアを使わずに、配布ファイル(zip)から入れる方法です。</p>
+    <ul>
+      <li>zip を解凍して、フォルダを作ります。解凍後も、このフォルダは削除しないでください。</li>
+      <li>ブラウザで <code>chrome://extensions</code> を開きます(Edge は <code>edge://extensions</code>)。</li>
+      <li>右上の「デベロッパー モード」をオンにします。</li>
+      <li>「パッケージ化されていない拡張機能を読み込む」を押し、解凍したフォルダを選びます。</li>
+    </ul>
+    <p>新しい版に更新するときは、新しい zip の内容でフォルダを置き換え、同じ画面で拡張機能の「更新」ボタンを押します。</p>
+
+    <h2>提供条件</h2>
+    <p>本拡張機能は、現状のまま提供します。すべてのサイトでの動作や、特定の目的への適合性を保証しません。サイトの仕様変更により、広告が消えなくなったり、ページが正しく表示されなくなったりすることがあります。</p>
+    <p>本拡張機能の利用により生じた損害について、提供者は、法令で認められる範囲で責任を負いません。</p>
+
+    <h2>提供者について</h2>
+    <table>
+      <tbody>
+        <tr><th scope="row">提供者</th><td>ProjectClearBrowse</td></tr>
+        <tr><th scope="row">連絡先</th><td><a href="mailto:projectclearbrowse@gmail.com">projectclearbrowse@gmail.com</a></td></tr>
+        <tr><th scope="row">ソースコード</th><td><a href="https://github.com/ProjectClearBrowse/clearbrowse" rel="noopener">https://github.com/ProjectClearBrowse/clearbrowse</a></td></tr>
+        <tr><th scope="row">ライセンス</th><td>MIT ライセンス</td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div>© 2026 ProjectClearBrowse</div>
+    <nav aria-label="フッターメニュー"><a href="./">トップ</a><a href="privacy.html">プライバシーポリシー</a></nav>
+  </div>
+</footer>
+</body>
+</html>

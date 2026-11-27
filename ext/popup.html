@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>クリアブラウズ</title>
+  <link rel="stylesheet" href="ui.css">
+  <style>
+    body { width: 300px; padding: 14px; }
+    .top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .site { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+    .host { font-weight: 700; word-break: break-all; margin: 0 0 2px; }
+    .state { margin: 0 0 10px; font-size: 12px; color: var(--muted); }
+    .state.off { color: var(--warn); }
+    .count { display: flex; align-items: baseline; gap: 8px; padding: 12px 2px 4px; }
+    .count b { font-size: 26px; line-height: 1; }
+    .count span { color: var(--muted); font-size: 12px; }
+    .actions { display: grid; gap: 8px; margin-top: 10px; }
+    .foot { margin-top: 12px; display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+    .foot a { color: var(--muted); }
+    #pickMsg { font-size: 12px; color: var(--warn); margin: 6px 0 0; }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <div class="brand">
+      <img src="icons/icon48.png" alt="">
+      <div><b id="name">クリアブラウズ</b><small>広告・ポップアップブロッカー</small></div>
+    </div>
+  </div>
+
+  <section class="site" aria-live="polite">
+    <p class="host" id="host">-</p>
+    <p class="state" id="state"></p>
+    <label class="switch">
+      <span>このサイトでブロックする</span>
+      <input type="checkbox" id="toggle" checked>
+      <span class="track" aria-hidden="true"></span>
+    </label>
+    <div class="count">
+      <b id="count">0</b>
+      <span>このページで止めたポップアップ・浮遊広告など<br>(広告通信の数はアイコンのバッジに表示)</span>
+    </div>
+  </section>
+
+  <div class="actions">
+    <button class="primary" id="pick">広告を選んで消す</button>
+    <p id="pickMsg" hidden></p>
+    <button id="reset">このサイトで消した広告を元に戻す</button>
+    <button id="options">設定・不具合を報告</button>
+  </div>
+
+  <div class="foot">
+    <span id="ver"></span>
+    <a id="donate" href="#" target="_blank" rel="noopener" hidden>開発を支援する</a>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

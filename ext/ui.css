@@ -1,0 +1,76 @@
+/* ポップアップと設定画面の共通スタイル(外部フォント・外部通信なし) */
+:root {
+  color-scheme: light dark;
+  --bg: #f7faf9;
+  --surface: #ffffff;
+  --ink: #12302c;
+  --muted: #5b7470;
+  --line: #d6e3e0;
+  --brand: #0f766e;
+  --brand-ink: #ffffff;
+  --brand-soft: #dff3f0;
+  --warn: #b45309;
+  --danger: #b42318;
+  --focus: #0b57d0;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0e1b19;
+    --surface: #152623;
+    --ink: #e4f1ee;
+    --muted: #9bb3ae;
+    --line: #26413c;
+    --brand: #2dd4bf;
+    --brand-ink: #08201c;
+    --brand-soft: #173a35;
+    --warn: #f5b25c;
+    --danger: #ff8a7a;
+    --focus: #8ab4ff;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 14px/1.6 "Yu Gothic UI", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+}
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+[hidden] { display: none !important; }
+a { color: var(--brand); }
+
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand img { width: 32px; height: 32px; }
+.brand b { font-size: 15px; line-height: 1.2; display: block; }
+.brand small { color: var(--muted); font-size: 12px; }
+
+button, .btn {
+  font: inherit;
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 38px; padding: 6px 14px;
+  border-radius: 8px; border: 1px solid var(--line);
+  background: var(--surface); color: var(--ink);
+  cursor: pointer; text-decoration: none;
+}
+button:hover, .btn:hover { border-color: var(--brand); }
+button.primary, .btn.primary { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); font-weight: 700; }
+button.danger { color: var(--danger); }
+button:disabled { opacity: .45; cursor: default; }
+
+.switch { display: flex; align-items: center; justify-content: space-between; gap: 14px; cursor: pointer; }
+.switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.switch .track {
+  flex: none; width: 42px; height: 24px; border-radius: 12px;
+  background: var(--line); position: relative; transition: background .15s;
+}
+.switch .track::after {
+  content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px;
+  border-radius: 50%; background: #fff; transition: transform .15s;
+}
+.switch input:checked + .track { background: var(--brand); }
+.switch input:checked + .track::after { transform: translateX(18px); }
+.switch input:focus-visible + .track { outline: 3px solid var(--focus); outline-offset: 2px; }
+.switch input:disabled + .track { opacity: .45; }
+@media (prefers-reduced-motion: reduce) {
+  .switch .track, .switch .track::after { transition: none; }
+}

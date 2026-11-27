@@ -1,0 +1,50 @@
+/* 広告枠の非表示(見た目の整理)。無効化したサイトでは data-pab-off により解除される。 */
+html:not([data-pab-off="1"]) :is(
+  iframe[src*="exoclick."],
+  iframe[src*="exosrv."],
+  iframe[src*="juicyads."],
+  iframe[src*="trafficjunky."],
+  iframe[src*="magsrv."],
+  iframe[src*="realsrv."],
+  iframe[src*="adsterra."],
+  iframe[src*="popads."],
+  iframe[src*="popcash."],
+  iframe[src*="propellerads."],
+  iframe[src*="clickadu."],
+  iframe[src*="hilltopads."],
+  iframe[src*="adtng."],
+  iframe[src*="tsyndicate."],
+  iframe[src*="doubleclick."],
+  iframe[src*="googlesyndication."],
+  iframe[src*="dmm.co.jp"],
+  iframe[src*="dmm.com"],
+  ins.adsbygoogle,
+  ins[data-revive-zoneid],
+  a[href*="juicyads.com"],
+  a[href*="trafficjunky."],
+  a[href*="exosrv.com"],
+  a[href*="realsrv.com"],
+  a[href*="al.dmm.co.jp"],
+  a[href*="al.fanza.co.jp"],
+  a[href*="affiliate.dmm.com"],
+  [id^="ts_ad_"],
+  [id^="google_ads_iframe"],
+  [id^="div-gpt-ad"],
+  [class*="exo-native"],
+  [id*="exoclick" i],
+  [class*="exoclick" i],
+  [class*="juicyads" i],
+  [id*="juicyads" i]
+) {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* TrafficJunky の「Ad」ラベルを持つ広告枠(クラス名がランダムでもラベル名は固定) */
+html:not([data-pab-off="1"]) :has(> [class~="t-j-inbanlabel-container"]),
+html:not([data-pab-off="1"]) :has(> [id^="tj-inbanlabel-container"]),
+html:not([data-pab-off="1"]) [class~="t-j-inbanlabel-container"],
+html:not([data-pab-off="1"]) [id^="tj-inbanlabel-container"] {
+  display: none !important;
+}

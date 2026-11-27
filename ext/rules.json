@@ -1,0 +1,86 @@
+[
+  {
+    "id": 1,
+    "priority": 1,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "exoclick.com",
+        "exosrv.com",
+        "exdynsrv.com",
+        "realsrv.com",
+        "magsrv.com",
+        "juicyads.com",
+        "trafficjunky.com",
+        "trafficjunky.net",
+        "creative-serving.com",
+        "popads.net",
+        "popcash.net",
+        "propellerads.com",
+        "propellerclick.com",
+        "onclkds.com",
+        "adsterra.com",
+        "highperformanceformat.com",
+        "effectivegatecpm.com",
+        "clickadu.com",
+        "hilltopads.net",
+        "adcash.com",
+        "ad-maven.com",
+        "a-ads.com",
+        "tsyndicate.com",
+        "plugrush.com",
+        "trafficstars.com",
+        "adtng.com",
+        "ero-advertising.com",
+        "tubecorporate.com",
+        "adspyglass.com",
+        "traffichaus.com",
+        "doubleclick.net",
+        "googlesyndication.com",
+        "googleadservices.com",
+        "adnxs.com"
+      ],
+      "resourceTypes": [
+        "main_frame",
+        "sub_frame",
+        "script",
+        "image",
+        "xmlhttprequest",
+        "ping",
+        "media",
+        "stylesheet",
+        "font",
+        "websocket",
+        "other"
+      ]
+    }
+  },
+  {
+    "id": 2,
+    "priority": 1,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "dmm.co.jp",
+        "dmm.com"
+      ],
+      "domainType": "thirdParty",
+      "resourceTypes": [
+        "sub_frame",
+        "script",
+        "image",
+        "xmlhttprequest",
+        "ping",
+        "media",
+        "stylesheet",
+        "font",
+        "websocket",
+        "other"
+      ]
+    }
+  }
+]
