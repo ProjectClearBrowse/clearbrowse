@@ -25,11 +25,16 @@
 現在、ストアでの公開を準備中です。それまでは、次の手順で手動インストールできます。
 
 
-1. このページの緑の「Code」ボタン →「Download ZIP」で、zip を保存します。
-2. zip を解凍します(解凍したフォルダは、削除しないでください)。
-3. ブラウザで `chrome://extensions` を開きます(Edge は `edge://extensions`)。
-4. 右上の「デベロッパー モード」をオンにします。
-5. 「パッケージ化されていない拡張機能を読み込む」を押し、解凍したフォルダの中の **`ext` フォルダ**を選びます。
+
+**[インストール手順(画面の操作を1つずつ説明しています)](https://projectclearbrowse.github.io/clearbrowse/install.html)** をご覧ください。zip は、[こちらから直接ダウンロード](https://projectclearbrowse.github.io/clearbrowse/download/clearbrowse-extension.zip)できます。
+
+
+このリポジトリのファイルから追加する場合は、次のとおりです。
+
+1. このページの緑の「Code」ボタン →「Download ZIP」で、zip を保存して解凍します(解凍したフォルダは、削除しないでください)。
+2. ブラウザで `chrome://extensions` を開きます(Edge は `edge://extensions`)。
+3. 右上の「デベロッパー モード」をオンにします。
+4. 「パッケージ化されていない拡張機能を読み込む」を押し、解凍したフォルダの中の **`ext` フォルダ**を選びます。
 
 ## 不具合の報告
 
