@@ -151,6 +151,13 @@ async function buildReport() {
     const off = FEATURE_DEFS.filter((d) => f[d.key] === false).map((d) => d.key);
     lines.push(`停止している機能: ${off.length ? off.join(', ') : 'なし'}`);
     lines.push(`エラー記録: ${errorLog.length}件`);
+    const { mode: md = 'standard' } = await chrome.storage.local.get({ mode: 'standard' });
+    lines.push(`ブロックの強さ: ${md}`);
+    const { hideLog = [] } = await chrome.storage.session.get({ hideLog: [] });
+    lines.push(`非表示にした要素の記録(直近${Math.min(hideLog.length, 15)}件・ブラウザを閉じると消えます):`);
+    hideLog.slice(-15).forEach((h) => {
+      lines.push(`[${fmtTime(h.t)}] ${h.reason} <${h.tag}> ${h.w}x${h.h}${h.host ? ' ' + h.host : ''}${h.strong ? ' (強力)' : ''}`);
+    });
     errorLog.slice(-10).forEach((e) => {
       const firstStack = (e.stack || '').split('\n').slice(0, 2).join(' | ');
       lines.push(`[${fmtTime(e.t)}] ${e.src}: ${e.message}${firstStack ? ' (' + firstStack + ')' : ''}`);

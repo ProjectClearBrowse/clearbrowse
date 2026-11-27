@@ -211,6 +211,32 @@
     return false;
   }
 
+  // 非表示にした要素の記録(種類・大きさ・理由のみ。ページのアドレスは含まない)。不具合の調査用で、端末内にだけ保存する
+  const hiddenMap = new WeakMap();
+  const keyOf = (el) => (el && (el.getAttribute('src') || el.getAttribute('href'))) || '';
+  function note(reason, el) {
+    try {
+      const r = el.getBoundingClientRect();
+      let h = '';
+      const u = el.src || el.href;
+      if (u) { const x = urlHost(u); if (x && x !== location.hostname) h = x; }
+      chrome.runtime.sendMessage({
+        type: 'hidelog', reason, tag: el.tagName.toLowerCase(),
+        w: Math.round(r.width), h: Math.round(r.height), host: h, strong: isAggressive(),
+      }).catch(() => {});
+    } catch (e) { /* ignore */ }
+  }
+  // 一度隠した要素でも、ページが中身を差し替えた場合(一覧の使い回しなど)は、元に戻す
+  function restoreStale() {
+    document.querySelectorAll('[data-pab-hidden="1"]').forEach((t) => {
+      const info = hiddenMap.get(t);
+      if (info && t.contains(info.el) && keyOf(info.el) === info.key) return;
+      t.style.removeProperty('display');
+      t.removeAttribute('data-pab-hidden');
+      note('restore', t);
+    });
+  }
+
   function hideInline(el) {
     let t = el;
     const r = el.getBoundingClientRect();
@@ -222,6 +248,8 @@
       t = p;
     }
     addArea(t);
+    note('inline', el);
+    hiddenMap.set(t, { el, key: keyOf(el) });
     t.style.setProperty('display', 'none', 'important');
     t.setAttribute('data-pab-hidden', '1');
     report('overlay');
@@ -243,12 +271,15 @@
       t = p;
     }
     addArea(t);
+    note('label', w);
+    hiddenMap.set(t, { el: w, key: keyOf(w) });
     t.style.setProperty('display', 'none', 'important');
     t.setAttribute('data-pab-hidden', '1');
     report('overlay');
   }
 
   function scanInline() {
+    restoreStale();
     document.querySelectorAll('iframe, a[href], img[src^="data:image"], img[src^="blob:"], video[src^="blob:"]').forEach((el) => {
       if (isInlineAd(el)) hideInline(el);
     });
@@ -260,7 +291,8 @@
     });
   }
 
-  function removeEl(el) {
+  function removeEl(el, reason) {
+    note(reason || 'overlay', el);
     try { el.remove(); } catch (e) { return; }
     report('overlay');
   }
@@ -319,7 +351,7 @@
       const ov = featureOn('overlay') && isAggressive() && isSuspectOverlay(el);
       const fl = !ov && featureOn('floating') && isFloatingAd(el);
       if (fl) addArea(el);
-      if (ov || fl) removeEl(el);
+      if (ov || fl) removeEl(el, ov ? 'overlay' : 'floating');
     }
     if (featureOn('inline')) scanInline();
     detectAggressive();
@@ -333,7 +365,7 @@
       if (isSuspectOverlay(el)) {
         ev.stopImmediatePropagation();
         ev.preventDefault();
-        removeEl(el);
+        removeEl(el, 'overlay-click');
         return;
       }
     }

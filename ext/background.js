@@ -97,6 +97,12 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
       areas[id] = msg.pct;
       return chrome.storage.session.set({ areas });
     }).catch(() => {});
+  } else if (msg.type === 'hidelog') {
+    chrome.storage.session.get('hideLog').then(({ hideLog = [] }) => {
+      hideLog.push({ t: Date.now(), reason: String(msg.reason).slice(0, 20), tag: String(msg.tag).slice(0, 12),
+        w: msg.w | 0, h: msg.h | 0, host: String(msg.host || '').slice(0, 60), strong: !!msg.strong });
+      return chrome.storage.session.set({ hideLog: hideLog.slice(-40) });
+    }).catch(() => {});
   } else if (msg.type === 'error') {
     logError({ src: msg.src, message: msg.message, stack: msg.stack });
   }
