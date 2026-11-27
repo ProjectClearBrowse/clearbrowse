@@ -111,7 +111,8 @@
 
   // --- 浮遊広告判定(画面の隅に固定表示される広告) ---
   function isExternal(url) {
-    try { return new URL(url, location.href).origin !== location.origin; } catch (e) { return false; }
+    // http(s) 以外(javascript: や blob: など)は、外部サイトへのリンクとはみなさない
+    try { const u = new URL(url, location.href); return /^https?:$/.test(u.protocol) && u.origin !== location.origin; } catch (e) { return false; }
   }
 
   // 同じサイトの別サブドメイン(例: www.google.com と ogs.google.com)は、第三者とみなさない
@@ -125,7 +126,7 @@
   function isThirdParty(url) {
     try {
       const u = new URL(url, location.href);
-      if (u.origin === location.origin) return false;
+      if (!/^https?:$/.test(u.protocol) || u.origin === location.origin) return false;
       const a = siteOf(u.hostname), b = siteOf(location.hostname);
       return !(a && b && a === b);
     } catch (e) { return false; }
@@ -202,11 +203,11 @@
     // (遅延読み込みのサムネイルなど、サイト自身の画像を誤って隠さないため)
     if (el.matches('img') && /^(data:image|blob:)/.test(el.getAttribute('src') || '')) {
       const a = el.closest('a[href]');
-      return !!a && isExternal(a.href);
+      return !!a && isThirdParty(a.href);
     }
     if (el.matches('video') && /^blob:/.test(el.getAttribute('src') || '')) {
       const a = el.closest('a[href]');
-      return !!a && isExternal(a.href);
+      return !!a && isThirdParty(a.href);
     }
     return false;
   }
