@@ -31,14 +31,14 @@
   // --- 広告配信元の一覧と、「強力」にするかどうかの判定 ---
   // 標準: 一覧にある広告配信元だけを対象にする(誤検出が少ない)。
   // 強力: ページの見た目(大きさ・位置・外部リンク)からも広告を推測する。
-  //       設定で強力にしたサイト、成人向けと判断したページ、ポップアップ広告の配信元を含むページで使う。
-  const NETS = self.PAB_ADNETS || { strong: [], all: [], adultHosts: [] };
+  //       設定で強力にしたサイト、広告が特に多いと判断したページ、ポップアップ広告の配信元を含むページで使う。
+  const NETS = self.PAB_ADNETS || { strong: [], all: [], strongHosts: [] };
   const hostIn = (host, list) => list.some((d) => host === d || host.endsWith('.' + d));
   const urlHost = (u) => { try { return new URL(u, location.href).hostname; } catch (e) { return ''; } };
   const isAdHost = (u) => hostIn(urlHost(u), NETS.all);
   const AD_ATTR = /(^|[^a-z])(ads?|adv|advert|adsbygoogle|aswift|google_ads|gpt)([^a-z]|$)/i;
   let mode = 'standard';
-  let detected = hostIn(HOST, NETS.adultHosts);
+  let detected = hostIn(HOST, NETS.strongHosts);
   const isAggressive = () => mode === 'strong' || detected;
 
   const report = (kind) => {
@@ -308,7 +308,7 @@
     root.setAttribute('data-pab-strong', isAggressive() ? '1' : '0');
   }
 
-  // 成人向けページ、またはポップアップ広告の配信元を含むページを判定する(最上位のページのみ)
+  // 広告が特に多いページ、またはポップアップ広告の配信元を含むページを判定する(最上位のページのみ)
   let detectTries = 0;
   let marked = false;
   function markDetected() {

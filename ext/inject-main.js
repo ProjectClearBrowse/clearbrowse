@@ -17,7 +17,7 @@
   const strong = () => attr('data-pab-strong') === '1';
 
   // 標準の設定では、利用者のクリック直後に開かれる、ログイン用の小さなウィンドウや、同じサイト内のウィンドウは許可する。
-  // 強力な設定(成人向けサイトなど)では、すべて遮断する。
+  // 強力な設定では、すべて遮断する。
   const legitOpen = (args) => {
     try {
       const active = navigator.userActivation && navigator.userActivation.isActive;

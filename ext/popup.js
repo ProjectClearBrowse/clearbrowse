@@ -45,8 +45,8 @@ function setState(on, strong) {
 
   const { disabledHosts = [], mode = 'standard' } = await chrome.storage.local.get({ disabledHosts: [], mode: 'standard' });
   const { aggressiveHosts = [] } = await chrome.storage.session.get({ aggressiveHosts: [] });
-  const adult = (self.PAB_ADNETS ? self.PAB_ADNETS.adultHosts : []).some((d) => host === d || host.endsWith('.' + d));
-  const strong = mode === 'strong' || adult || aggressiveHosts.includes(host);
+  const known = (self.PAB_ADNETS ? self.PAB_ADNETS.strongHosts : []).some((d) => host === d || host.endsWith('.' + d));
+  const strong = mode === 'strong' || known || aggressiveHosts.includes(host);
   const on = !disabledHosts.includes(host);
   $('toggle').checked = on;
   setState(on, strong);
