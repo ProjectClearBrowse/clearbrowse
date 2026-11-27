@@ -14,6 +14,21 @@
   const popupOn = () => !isOff() && attr('data-pab-f-popup') !== '0';
   const wsOn = () => !isOff() && attr('data-pab-f-ws') !== '0';
 
+  const strong = () => attr('data-pab-strong') === '1';
+
+  // 標準の設定では、利用者のクリック直後に開かれる、ログイン用の小さなウィンドウや、同じサイト内のウィンドウは許可する。
+  // 強力な設定(成人向けサイトなど)では、すべて遮断する。
+  const legitOpen = (args) => {
+    try {
+      const active = navigator.userActivation && navigator.userActivation.isActive;
+      if (!active) return false;
+      const url = args[0];
+      if (url === undefined || url === null || url === '' || String(url) === 'about:blank') return true;
+      if (new URL(String(url), location.href).origin === location.origin) return true;
+      return typeof args[2] === 'string' && args[2].trim() !== ''; // ウィンドウの大きさ指定がある(ログイン画面など)
+    } catch (e) { return false; }
+  };
+
   const post = (kind, extra) => {
     try {
       window.postMessage(Object.assign({ __pab: true, kind }, extra || {}), '*');
@@ -47,6 +62,7 @@
         return function open(...args) {
           try {
             if (!popupOn()) return origOpen.apply(window, args);
+            if (!strong() && legitOpen(args)) return origOpen.apply(window, args);
             post('popup');
             return makeStub();
           } catch (e) {

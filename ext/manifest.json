@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "クリアブラウズ - 広告・ポップアップブロッカー",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "広告・ポップアップ・クリックの乗っ取りをブロックする無料の拡張機能です。閲覧データは収集いたしません。",
   "minimum_chrome_version": "111",
   "icons": {
@@ -28,7 +28,7 @@
     },
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js"],
+      "js": ["adnets.js", "content.js"],
       "css": ["content.css"],
       "run_at": "document_start",
       "all_frames": true

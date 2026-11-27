@@ -28,6 +28,19 @@
   const FEATURES = { popup: true, overlay: true, floating: true, inline: true, ws: true };
   const featureOn = (k) => FEATURES[k] !== false;
 
+  // --- 広告配信元の一覧と、「強力」にするかどうかの判定 ---
+  // 標準: 一覧にある広告配信元だけを対象にする(誤検出が少ない)。
+  // 強力: ページの見た目(大きさ・位置・外部リンク)からも広告を推測する。
+  //       設定で強力にしたサイト、成人向けと判断したページ、ポップアップ広告の配信元を含むページで使う。
+  const NETS = self.PAB_ADNETS || { strong: [], all: [], adultHosts: [] };
+  const hostIn = (host, list) => list.some((d) => host === d || host.endsWith('.' + d));
+  const urlHost = (u) => { try { return new URL(u, location.href).hostname; } catch (e) { return ''; } };
+  const isAdHost = (u) => hostIn(urlHost(u), NETS.all);
+  const AD_ATTR = /(^|[^a-z])(ads?|adv|advert|adsbygoogle|aswift|google_ads|gpt)([^a-z]|$)/i;
+  let mode = 'standard';
+  let detected = hostIn(HOST, NETS.adultHosts);
+  const isAggressive = () => mode === 'strong' || detected;
+
   const report = (kind) => {
     try { chrome.runtime.sendMessage({ type: 'blocked', kind }); } catch (e) { /* ignore */ }
   };
@@ -138,7 +151,10 @@
         el.querySelector('input,textarea,select,form,nav,header,[role=search],[role=navigation]')) return false;
 
     const frames = el.matches('iframe') ? [el] : Array.from(el.querySelectorAll('iframe'));
-    if (frames.some((f) => f.src && isThirdParty(f.src))) return true;
+    const aggressive = isAggressive();
+    if (frames.some((f) => f.src && !SAFE_FRAME.test(f.src) &&
+        (isAdHost(f.src) || (aggressive && isThirdParty(f.src))))) return true;
+    if (!aggressive) return false;
 
     const hasMedia = !!el.querySelector('img,video,canvas,iframe,picture') || el.matches('img,video,canvas');
     if (!hasMedia) return false;
@@ -152,7 +168,7 @@
     [320, 50], [320, 100], [468, 60], [300, 100], [250, 250], [336, 280], [300, 50],
     [900, 250], [160, 300], [300, 300], [720, 90], [980, 120],
   ];
-  const SAFE_FRAME = /youtube\.|youtu\.be|vimeo\.|dailymotion\.|recaptcha|hcaptcha|turnstile|challenges\.cloudflare/i;
+  const SAFE_FRAME = /youtube\.|youtu\.be|vimeo\.|dailymotion\.|recaptcha|hcaptcha|turnstile|challenges\.cloudflare|intercom|drift\.com|zendesk|zdassets|crisp\.chat|tawk\.to|livechat|hubspot|freshchat|freshdesk|helpscout|tidio|olark|stripe\.|paypal\.|accounts\.google|appleid|disqus|line\.me|facebook\.com\/plugins|twitter\.com|x\.com|spotify|soundcloud|google\.com\/maps|openstreetmap/i;
 
   function looksLikeBanner(w, h) {
     if (AD_SIZES.some(([a, b]) => Math.abs(w - a) <= 4 && Math.abs(h - b) <= 4)) return true;
@@ -163,9 +179,19 @@
     if (el.getAttribute('data-pab-hidden') === '1') return false;
     const r = el.getBoundingClientRect();
     if (r.width < 40 || r.height < 30) return false;
-    if (!looksLikeBanner(r.width, r.height)) return false;
+    const aggressive = isAggressive();
     const cs = getComputedStyle(el);
     if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+    if (!aggressive) {
+      // 標準: 広告配信元の一覧にあるもの、または広告であることが名前から明らかなものだけを隠す
+      if (el.matches('iframe')) {
+        if (SAFE_FRAME.test(el.src || '')) return false;
+        return isAdHost(el.src) || (AD_ATTR.test((el.id || '') + ' ' + (el.name || '')) && looksLikeBanner(r.width, r.height));
+      }
+      if (el.matches('a[href]')) return isAdHost(el.href) && !!el.querySelector('img,video,canvas,picture,svg');
+      return false;
+    }
+    if (!looksLikeBanner(r.width, r.height)) return false;
     if (el.matches('iframe')) return !SAFE_FRAME.test(el.getAttribute('src') || '') && (!el.src || isThirdParty(el.src));
     if (el.matches('a[href]')) {
       if (!isExternal(el.href)) return false;
@@ -240,8 +266,40 @@
   }
 
   function applyFlagAttrs() {
-    for (const k of ['popup', 'ws']) {
+    for (const k of ['popup', 'ws', 'inline']) {
       root.setAttribute('data-pab-f-' + k, featureOn(k) ? '1' : '0');
+    }
+    root.setAttribute('data-pab-strong', isAggressive() ? '1' : '0');
+  }
+
+  // 成人向けページ、またはポップアップ広告の配信元を含むページを判定する(最上位のページのみ)
+  let detectTries = 0;
+  let marked = false;
+  function markDetected() {
+    if (marked) return;
+    marked = true;
+    detected = true;
+    applyFlagAttrs();
+    try {
+      chrome.storage.session.get({ aggressiveHosts: [] }).then(({ aggressiveHosts }) => {
+        if (!aggressiveHosts.includes(HOST)) {
+          aggressiveHosts.push(HOST);
+          return chrome.storage.session.set({ aggressiveHosts: aggressiveHosts.slice(-100) });
+        }
+      }).catch(() => {});
+    } catch (e) { /* ignore */ }
+  }
+  function detectAggressive() {
+    if (window !== window.top || detectTries >= 15) return;
+    if (detected) { if (detectTries === 0) { detectTries = 99; markDetected(); } return; }
+    detectTries++;
+    const meta = document.querySelector('meta[name="rating" i]');
+    if (meta && /adult|RTA-5042-1996-1400-1577-RTA/i.test(meta.content || '')) { markDetected(); return; }
+    const els = document.querySelectorAll('script[src],iframe[src],a[href^="http"],img[src^="http"]');
+    const n = Math.min(els.length, 500);
+    for (let i = 0; i < n; i++) {
+      const u = els[i].src || els[i].href;
+      if (u && hostIn(urlHost(u), NETS.strong)) { markDetected(); return; }
     }
   }
 
@@ -258,17 +316,18 @@
       for (let i = 0; i < 6 && e && e !== document.body; i++, e = e.parentElement) cands.add(e);
     });
     for (const el of cands) {
-      const ov = featureOn('overlay') && isSuspectOverlay(el);
+      const ov = featureOn('overlay') && isAggressive() && isSuspectOverlay(el);
       const fl = !ov && featureOn('floating') && isFloatingAd(el);
       if (fl) addArea(el);
       if (ov || fl) removeEl(el);
     }
     if (featureOn('inline')) scanInline();
+    detectAggressive();
   });
 
   // クリックの瞬間に透明オーバーレイがあれば、それを消してクリックを無効化
   function onPointer(ev) {
-    if (off || !featureOn('overlay') || !ev.isTrusted) return;
+    if (off || !featureOn('overlay') || !isAggressive() || !ev.isTrusted) return;
     let el = ev.target;
     for (let i = 0; el && i < 4; i++, el = el.parentElement) {
       if (isSuspectOverlay(el)) {
@@ -397,8 +456,14 @@
   });
 
   // --- 設定の読み込みと反映 ---
-  chrome.storage.local.get({ disabledHosts: [], hiddenSelectors: {}, features: {} }, ({ disabledHosts, hiddenSelectors, features }) => {
+  chrome.storage.local.get({ disabledHosts: [], hiddenSelectors: {}, features: {}, mode: 'standard' }, ({ disabledHosts, hiddenSelectors, features, mode: m }) => {
     Object.assign(FEATURES, features);
+    mode = m === 'strong' ? 'strong' : 'standard';
+    try {
+      chrome.storage.session.get({ aggressiveHosts: [] }).then(({ aggressiveHosts }) => {
+        if (aggressiveHosts.includes(HOST) && !detected) { detected = true; applyFlagAttrs(); scan(); }
+      }).catch(() => {});
+    } catch (e) { /* ignore */ }
     applyFlagAttrs();
     if (isDisabledFor(HOST, disabledHosts)) {
       off = true;
@@ -409,11 +474,21 @@
   });
 
   chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === 'session' && changes.aggressiveHosts && !detected) {
+      const l = changes.aggressiveHosts.newValue || [];
+      if (l.includes(HOST)) { detected = true; applyFlagAttrs(); scan(); }
+      return;
+    }
     if (area !== 'local') return;
     if (changes.hiddenSelectors) applyHidden(changes.hiddenSelectors.newValue);
     if (changes.features) {
       Object.assign(FEATURES, changes.features.newValue || {});
       applyFlagAttrs();
+    }
+    if (changes.mode) {
+      mode = changes.mode.newValue === 'strong' ? 'strong' : 'standard';
+      applyFlagAttrs();
+      scan();
     }
   });
 

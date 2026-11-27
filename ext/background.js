@@ -4,6 +4,9 @@
 // ・エラーを端末内のログに記録(外部へは送信しません)
 // ・初回インストール時に案内ページを開く
 
+// コンテンツスクリプトからも、一時的な保存領域(ブラウザを閉じると消えます)を使えるようにする
+try { chrome.storage.session.setAccessLevel({ accessLevel: 'TRUSTED_AND_UNTRUSTED_CONTEXTS' }); } catch (e) { /* ignore */ }
+
 const ALLOW_RULE_BASE = 10000;
 const MAX_LOG = 50;
 

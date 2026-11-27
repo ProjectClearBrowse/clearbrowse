@@ -1,82 +1,179 @@
 [
-  {
-    "id": 1,
-    "priority": 1,
-    "action": {
-      "type": "block"
-    },
-    "condition": {
-      "requestDomains": [
-        "exoclick.com",
-        "exosrv.com",
-        "exdynsrv.com",
-        "realsrv.com",
-        "magsrv.com",
-        "juicyads.com",
-        "trafficjunky.com",
-        "trafficjunky.net",
-        "creative-serving.com",
-        "popads.net",
-        "popcash.net",
-        "propellerads.com",
-        "propellerclick.com",
-        "onclkds.com",
-        "adsterra.com",
-        "highperformanceformat.com",
-        "effectivegatecpm.com",
-        "clickadu.com",
-        "hilltopads.net",
-        "adcash.com",
-        "ad-maven.com",
-        "a-ads.com",
-        "tsyndicate.com",
-        "plugrush.com",
-        "trafficstars.com",
-        "adtng.com",
-        "ero-advertising.com",
-        "tubecorporate.com",
-        "adspyglass.com",
-        "traffichaus.com",
-        "doubleclick.net",
-        "googlesyndication.com",
-        "googleadservices.com",
-        "adnxs.com"
-      ],
-      "resourceTypes": [
-        "main_frame",
-        "sub_frame",
-        "script",
-        "image",
-        "xmlhttprequest",
-        "ping",
-        "media",
-        "stylesheet",
-        "font",
-        "websocket",
-        "other"
-      ]
-    }
+ {
+  "id": 1,
+  "priority": 1,
+  "action": {
+   "type": "block"
   },
-  {
-    "id": 2,
-    "priority": 1,
-    "action": {
-      "type": "block"
-    },
-    "condition": {
-      "requestDomains": [
-        "dmm.co.jp",
-        "dmm.com"
-      ],
-      "domainType": "thirdParty",
-      "resourceTypes": [
-        "sub_frame",
-        "script",
-        "xmlhttprequest",
-        "ping",
-        "websocket",
-        "other"
-      ]
-    }
+  "condition": {
+   "requestDomains": [
+    "a-ads.com",
+    "ad-maven.com",
+    "adcash.com",
+    "adskeeper.com",
+    "adspyglass.com",
+    "adsterra.com",
+    "adtng.com",
+    "clickadu.com",
+    "clicksor.com",
+    "cpmstar.com",
+    "creative-serving.com",
+    "effectivegatecpm.com",
+    "ero-advertising.com",
+    "exdynsrv.com",
+    "exoclick.com",
+    "exosrv.com",
+    "highperformanceformat.com",
+    "hilltopads.net",
+    "juicyads.com",
+    "magsrv.com",
+    "onclkds.com",
+    "plugrush.com",
+    "popads.net",
+    "popcash.net",
+    "popmyads.com",
+    "propellerads.com",
+    "propellerclick.com",
+    "realsrv.com",
+    "richads.com",
+    "trafficforce.com",
+    "traffichaus.com",
+    "trafficjunky.com",
+    "trafficjunky.net",
+    "trafficstars.com",
+    "tsyndicate.com",
+    "tubecorporate.com",
+    "yllix.com"
+   ],
+   "resourceTypes": [
+    "main_frame",
+    "sub_frame",
+    "script",
+    "image",
+    "xmlhttprequest",
+    "ping",
+    "media",
+    "stylesheet",
+    "font",
+    "websocket",
+    "other"
+   ]
   }
+ },
+ {
+  "id": 2,
+  "priority": 1,
+  "action": {
+   "type": "block"
+  },
+  "condition": {
+   "requestDomains": [
+    "dmm.co.jp",
+    "dmm.com"
+   ],
+   "domainType": "thirdParty",
+   "resourceTypes": [
+    "sub_frame",
+    "script",
+    "xmlhttprequest",
+    "ping",
+    "websocket",
+    "other"
+   ]
+  }
+ },
+ {
+  "id": 3,
+  "priority": 1,
+  "action": {
+   "type": "block"
+  },
+  "condition": {
+   "requestDomains": [
+    "2mdn.net",
+    "3lift.com",
+    "a8.net",
+    "accesstrade.net",
+    "ad-stir.com",
+    "adform.net",
+    "adingo.jp",
+    "adnxs.com",
+    "adroll.com",
+    "adsafeprotected.com",
+    "adservice.google.com",
+    "adsrvr.org",
+    "adstir.com",
+    "adtechus.com",
+    "adthrive.com",
+    "adtrafficquality.google",
+    "advertising.com",
+    "afi-b.com",
+    "amazon-adsystem.com",
+    "bidswitch.net",
+    "casalemedia.com",
+    "contextweb.com",
+    "conversantmedia.com",
+    "criteo.com",
+    "criteo.net",
+    "doubleclick.net",
+    "doubleverify.com",
+    "genieedmp.com",
+    "genieesspv.jp",
+    "gmossp-sp.jp",
+    "googleadservices.com",
+    "googlesyndication.com",
+    "googletagservices.com",
+    "gumgum.com",
+    "i-mobile.co.jp",
+    "impact-ad.jp",
+    "improvedigital.com",
+    "indexww.com",
+    "lijit.com",
+    "linksynergy.com",
+    "logly.co.jp",
+    "mathtag.com",
+    "media.net",
+    "mediavine.com",
+    "mgid.com",
+    "microad.jp",
+    "moatads.com",
+    "moshimo.com",
+    "nend.net",
+    "openx.net",
+    "outbrain.com",
+    "outbrainimg.com",
+    "popin.cc",
+    "pubmatic.com",
+    "rentracks.jp",
+    "revcontent.com",
+    "rubiconproject.com",
+    "serving-sys.com",
+    "sharethrough.com",
+    "smartadserver.com",
+    "sovrn.com",
+    "taboola.com",
+    "teads.tv",
+    "triplelift.com",
+    "valuecommerce.com",
+    "yieldlab.net",
+    "yieldmo.com",
+    "yjtag.jp",
+    "zemanta.com",
+    "zucks.net"
+   ],
+   "domainType": "thirdParty",
+   "resourceTypes": [
+    "sub_frame",
+    "script",
+    "image",
+    "xmlhttprequest",
+    "ping",
+    "media",
+    "stylesheet",
+    "font",
+    "websocket",
+    "other"
+   ]
+  }
+ }
 ]

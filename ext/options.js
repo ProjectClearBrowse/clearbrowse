@@ -2,13 +2,49 @@ const $ = (id) => document.getElementById(id);
 
 const FEATURE_DEFS = [
   { key: 'popup', title: 'ポップアップ・新規タブの自動表示をブロックする', desc: 'クリックしていないのに開く、別ウィンドウや別タブを防ぎます。ログイン用の小さなウィンドウが開かない場合は、そのサイトのみブロックを停止してください。' },
-  { key: 'overlay', title: '透明な板によるクリックの乗っ取りをブロックする', desc: '画面全体を覆う透明な板を取り除き、クリックが広告に奪われないようにします。' },
-  { key: 'floating', title: '画面の隅などに固定された広告を非表示にする', desc: '画面の端に固定されている、外部サイトの広告を非表示にします。' },
-  { key: 'inline', title: 'ページ内のバナー広告を非表示にする', desc: '標準的な広告サイズのバナーを非表示にします。広告ではない表示が消えてしまう場合は、この項目をオフにしてください。' },
+  { key: 'overlay', title: '透明な板によるクリックの乗っ取りをブロックする', desc: '画面全体を覆う透明な板を取り除き、クリックが広告に奪われないようにします。強力なページで動作します。' },
+  { key: 'floating', title: '画面の隅などに固定された広告を非表示にする', desc: '画面の端に固定されている広告を非表示にします。標準では、広告配信元のものだけが対象です。' },
+  { key: 'inline', title: 'ページ内のバナー広告を非表示にする', desc: 'ページ内のバナー広告を非表示にします。標準では、広告配信元のものだけが対象で、強力では、標準的な広告サイズのバナーも対象です。広告ではない表示が消えてしまう場合は、この項目をオフにしてください。' },
   { key: 'ws', title: 'WebSocket で配信される広告をブロックする', desc: '通常の通信とは別の方法で配信される広告データを、表示しないようにします。' },
 ];
 
 let features = {};
+let mode = 'standard';
+
+const MODE_DEFS = [
+  { key: 'standard', title: '標準(おすすめ)', desc: '広告会社への通信をブロックし、広告であることが明らかなものだけを非表示にします。ページの表示が崩れにくい設定です。' },
+  { key: 'strong', title: '強力', desc: '大きさ・位置・外部へのリンクなど、ページの見た目からも広告を判断して非表示にします。しつこい広告が残るサイト向けです。広告ではない表示が、消えてしまう場合もございます。' },
+];
+
+function renderModes() {
+  const box = $('modes');
+  box.textContent = '';
+  MODE_DEFS.forEach((m) => {
+    const row = document.createElement('div');
+    row.className = 'row';
+    const label = document.createElement('label');
+    label.style.cssText = 'display:flex;gap:12px;align-items:flex-start;cursor:pointer';
+    const input = document.createElement('input');
+    input.type = 'radio';
+    input.name = 'mode';
+    input.checked = mode === m.key;
+    input.style.cssText = 'margin-top:4px;flex:none';
+    input.addEventListener('change', async () => {
+      mode = m.key;
+      await chrome.storage.local.set({ mode });
+    });
+    const text = document.createElement('span');
+    const b = document.createElement('b');
+    b.textContent = m.title;
+    const small = document.createElement('small');
+    small.style.display = 'block';
+    small.textContent = m.desc;
+    text.append(b, small);
+    label.append(input, text);
+    row.append(label);
+    box.append(row);
+  });
+}
 
 function fmtTime(t) {
   const d = new Date(t);
@@ -180,8 +216,10 @@ function setupReport() {
   $('ver').textContent = 'バージョン ' + PAB.version;
   if (location.hash === '#welcome') $('welcome').hidden = false;
 
-  const stored = await chrome.storage.local.get({ features: {} });
+  const stored = await chrome.storage.local.get({ features: {}, mode: 'standard' });
   features = stored.features || {};
+  mode = stored.mode === 'strong' ? 'strong' : 'standard';
+  renderModes();
   renderFeatures();
   await renderSites();
   setupReport();
