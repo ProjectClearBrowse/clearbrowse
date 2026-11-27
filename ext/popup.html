@@ -18,6 +18,7 @@
     .actions { display: grid; gap: 8px; margin-top: 10px; }
     .foot { margin-top: 12px; display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
     .foot a { color: var(--muted); }
+    .estimate { margin: 10px 2px 0; font-size: 11px; line-height: 1.6; color: var(--muted); }
     #pickMsg { font-size: 12px; color: var(--warn); margin: 6px 0 0; }
   </style>
 </head>
@@ -42,10 +43,20 @@
       <span>このページでブロックした、広告会社への通信の数</span>
     </div>
     <div class="count">
+      <b id="areaPct">0%</b>
+      <span>このページで非表示にした広告が、画面に占める割合(目安)</span>
+    </div>
+    <div class="count">
+      <b id="energy">0 mWh</b>
+      <span>このページでの、推定節約電力量(目安)</span>
+    </div>
+    <div class="count">
       <b id="count">0</b>
       <span>このページでブロックした、ポップアップや固定広告などの数</span>
     </div>
   </section>
+
+  <p class="estimate">割合は、非表示にした広告の面積を、表示領域の面積で割った値です(重なりは考慮しておりません)。電力量は、ブロックした通信1回あたり約50KB、通信1GBあたり約60Wh と仮定して計算した、あくまで目安でございます。実際の値を示すものではございません。</p>
 
   <div class="actions">
     <button class="primary" id="pick">広告を選んで消す</button>

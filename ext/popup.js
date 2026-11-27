@@ -51,12 +51,20 @@ function setState(on) {
   const { counts = {} } = await chrome.storage.session.get('counts');
   $('count').textContent = String(counts[String(tab.id)] || 0);
   try {
+    const { areas = {} } = await chrome.storage.session.get('areas');
+    const p = areas[String(tab.id)] || 0;
+    $('areaPct').textContent = (p < 10 && p > 0 ? p.toFixed(1) : Math.round(p)) + '%';
+  } catch (e) { /* 取得できない場合は 0% のまま */ }
+  try {
     const { since = {} } = await chrome.storage.session.get('since');
     const info = await chrome.declarativeNetRequest.getMatchedRules({
       tabId: tab.id,
       minTimeStamp: since[String(tab.id)] || 0,
     });
-    $('netCount').textContent = String(info.rulesMatchedInfo.length);
+    const n = info.rulesMatchedInfo.length;
+    $('netCount').textContent = String(n);
+    const mwh = n * 3; // 50KB x 60Wh/GB = 3mWh / 通信
+    $('energy').textContent = mwh >= 1000 ? (mwh / 1000).toFixed(2) + ' Wh' : mwh + ' mWh';
   } catch (e) { /* 取得できない場合は 0 のまま */ }
 
   $('toggle').addEventListener('change', async () => {

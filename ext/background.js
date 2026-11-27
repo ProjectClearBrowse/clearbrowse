@@ -88,6 +88,12 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
   if (msg.type === 'blocked' && sender.tab) {
     const id = String(sender.tab.id);
     updateCounts((c) => { c[id] = (c[id] || 0) + 1; });
+  } else if (msg.type === 'area' && sender.tab && sender.frameId === 0) {
+    const id = String(sender.tab.id);
+    chrome.storage.session.get('areas').then(({ areas = {} }) => {
+      areas[id] = msg.pct;
+      return chrome.storage.session.set({ areas });
+    }).catch(() => {});
   } else if (msg.type === 'error') {
     logError({ src: msg.src, message: msg.message, stack: msg.stack });
   }
@@ -98,6 +104,10 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
     chrome.storage.session.get('since').then(({ since = {} }) => {
       since[String(tabId)] = Date.now() - 1000;
       return chrome.storage.session.set({ since });
+    }).catch(() => {});
+    chrome.storage.session.get('areas').then(({ areas = {} }) => {
+      delete areas[String(tabId)];
+      return chrome.storage.session.set({ areas });
     }).catch(() => {});
     updateCounts((c) => { delete c[String(tabId)]; });
   }

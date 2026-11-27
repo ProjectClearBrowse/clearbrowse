@@ -33,6 +33,18 @@
   };
 
   // エラーは端末内のログにだけ記録する(外部には送信しない)
+  // 非表示にした広告の面積(画面に対する割合の目安)。最上位のページでのみ集計する
+  let hiddenArea = 0;
+  const addArea = (el) => {
+    try {
+      if (window !== window.top) return;
+      const r = el.getBoundingClientRect();
+      hiddenArea += Math.max(0, r.width) * Math.max(0, r.height);
+      const vp = Math.max(1, window.innerWidth * window.innerHeight);
+      chrome.runtime.sendMessage({ type: 'area', pct: Math.min(100, (hiddenArea / vp) * 100) }).catch(() => {});
+    } catch (e) { /* 集計できない場合は何もしない */ }
+  };
+
   const reportError = (where, e) => {
     try {
       chrome.runtime.sendMessage({
@@ -162,6 +174,7 @@
       if (pr.width > r.width + 80 || pr.height > r.height + 80) break;
       t = p;
     }
+    addArea(t);
     t.style.setProperty('display', 'none', 'important');
     t.setAttribute('data-pab-hidden', '1');
     report('overlay');
@@ -182,6 +195,7 @@
       if (pr.width > r.width + 80 || pr.height > r.height + 80) break;
       t = p;
     }
+    addArea(t);
     t.style.setProperty('display', 'none', 'important');
     t.setAttribute('data-pab-hidden', '1');
     report('overlay');
@@ -223,7 +237,10 @@
       for (let i = 0; i < 6 && e && e !== document.body; i++, e = e.parentElement) cands.add(e);
     });
     for (const el of cands) {
-      if ((featureOn('overlay') && isSuspectOverlay(el)) || (featureOn('floating') && isFloatingAd(el))) removeEl(el);
+      const ov = featureOn('overlay') && isSuspectOverlay(el);
+      const fl = !ov && featureOn('floating') && isFloatingAd(el);
+      if (fl) addArea(el);
+      if (ov || fl) removeEl(el);
     }
     if (featureOn('inline')) scanInline();
   });
