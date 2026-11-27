@@ -1,0 +1,25 @@
+第三者のフィルターについて / Third-party filter lists
+==========================================================
+
+ext/filters/ 内の JSON ファイルは、次の公開フィルターを、ブラウザの declarativeNetRequest 形式に変換したものです。
+(ネットワーク通信を遮断するルールのみを取り出し、形式を変換しています。)
+これらのファイルは、元のフィルターのライセンスに従います。
+
+1. EasyList (filters/easylist.json)
+   https://easylist.to/
+   ライセンス: GNU GPL v3 以降、または Creative Commons Attribution-ShareAlike 3.0 Unported(デュアルライセンス)
+   https://easylist.to/pages/licence.html
+
+2. EasyPrivacy (filters/easyprivacy.json)
+   https://easylist.to/
+   ライセンス: GNU GPL v3 以降、または Creative Commons Attribution-ShareAlike 3.0 Unported(デュアルライセンス)
+   https://easylist.to/pages/licence.html
+
+3. Fanboy's Annoyance List (filters/fanboy-annoyance.json)
+   https://easylist.to/
+   ライセンス: Creative Commons Attribution 3.0 Unported
+   http://creativecommons.org/licenses/by/3.0/
+
+元のフィルターの取得日: 2026-11-27
+
+上記以外のこの拡張機能のコードは、MIT ライセンスです(LICENSE を参照)。

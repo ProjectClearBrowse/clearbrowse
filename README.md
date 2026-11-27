@@ -53,6 +53,10 @@ YouTube など、動画の中に広告が組み込まれているサイトでは
 | `ext/` | 拡張機能の本体(圧縮・難読化はしておりません) |
 | `docs/` | 公式サイト(GitHub Pages で公開しております) |
 
+## 第三者のフィルター
+
+`ext/filters/` のファイルは、EasyList、EasyPrivacy、Fanboy's Annoyance List(https://easylist.to/)を、ブラウザの形式に変換したものです。これらは、元のフィルターのライセンス(GPL v3 以降 / CC BY-SA 3.0 / CC BY 3.0)に従います。詳細は `ext/THIRD_PARTY_NOTICES.txt` をご覧ください。
+
 ## ライセンス
 
-MIT ライセンスです。詳細は `LICENSE` をご覧ください。
+MIT ライセンスです(上記のフィルターを除きます)。詳細は `LICENSE` をご覧ください。

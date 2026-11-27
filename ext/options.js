@@ -8,6 +8,43 @@ const FEATURE_DEFS = [
   { key: 'ws', title: 'WebSocket で配信される広告をブロックする', desc: '通常の通信とは別の方法で配信される広告データを、表示しないようにします。' },
 ];
 
+const LIST_DEFS = [
+  { key: 'easylist', def: true, title: '広告', desc: '世界中のサイトの、広告を配信する会社や広告の部品への通信をブロックします(EasyList に基づきます)。' },
+  { key: 'easyprivacy', def: true, title: 'トラッカー', desc: '閲覧を追跡する仕組み(アクセス解析など)への通信をブロックします(EasyPrivacy に基づきます)。まれに、一部の機能が動かなくなるサイトがございます。' },
+  { key: 'annoyance', def: false, title: '迷惑な表示', desc: 'SNS のボタン、Cookie の同意バナー、ニュースレターへの誘導などをブロックします(Fanboy’s Annoyance List に基づきます)。SNS でログインするボタンなどが動かなくなる場合がございます。' },
+];
+let lists = {};
+
+function renderLists() {
+  const box = $('lists');
+  box.textContent = '';
+  LIST_DEFS.forEach((f) => {
+    const row = document.createElement('div');
+    row.className = 'row';
+    const label = document.createElement('label');
+    label.className = 'switch';
+    const text = document.createElement('span');
+    const b = document.createElement('b');
+    b.textContent = f.title;
+    const small = document.createElement('small');
+    small.textContent = f.desc;
+    text.append(b, small);
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.checked = f.key in lists ? lists[f.key] : f.def;
+    input.addEventListener('change', async () => {
+      lists[f.key] = input.checked;
+      await chrome.storage.local.set({ lists });
+    });
+    const track = document.createElement('span');
+    track.className = 'track';
+    track.setAttribute('aria-hidden', 'true');
+    label.append(text, input, track);
+    row.append(label);
+    box.append(row);
+  });
+}
+
 let features = {};
 let mode = 'standard';
 
@@ -223,10 +260,12 @@ function setupReport() {
   $('ver').textContent = 'バージョン ' + PAB.version;
   if (location.hash === '#welcome') $('welcome').hidden = false;
 
-  const stored = await chrome.storage.local.get({ features: {}, mode: 'standard' });
+  const stored = await chrome.storage.local.get({ features: {}, mode: 'standard', lists: {} });
+  lists = stored.lists || {};
   features = stored.features || {};
   mode = stored.mode === 'strong' ? 'strong' : 'standard';
   renderModes();
+  renderLists();
   renderFeatures();
   await renderSites();
   setupReport();

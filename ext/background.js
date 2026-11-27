@@ -35,6 +35,18 @@ self.addEventListener('unhandledrejection', (e) => {
   logError({ src: 'background', message: (r && r.message) || String(r), stack: r && r.stack });
 });
 
+// --- 広告・トラッカー・迷惑な表示のフィルター(設定画面でオン・オフ) ---
+const LIST_DEFAULTS = { easylist: true, easyprivacy: true, annoyance: false };
+async function applyLists() {
+  const { lists = {} } = await chrome.storage.local.get({ lists: {} });
+  const enableRulesetIds = [];
+  const disableRulesetIds = [];
+  for (const [k, d] of Object.entries(LIST_DEFAULTS)) {
+    ((k in lists ? lists[k] : d) ? enableRulesetIds : disableRulesetIds).push(k);
+  }
+  await chrome.declarativeNetRequest.updateEnabledRulesets({ enableRulesetIds, disableRulesetIds });
+}
+
 // --- サイトごとの停止 ---
 async function syncAllowRules() {
   const { disabledHosts = [] } = await chrome.storage.local.get({ disabledHosts: [] });
@@ -56,6 +68,7 @@ async function setup() {
   try {
     chrome.declarativeNetRequest.setExtensionActionOptions({ displayActionCountAsBadgeText: true });
     await syncAllowRules();
+    await applyLists();
   } catch (e) {
     logError({ src: 'background:setup', message: e.message, stack: e.stack });
   }
@@ -70,6 +83,9 @@ chrome.runtime.onInstalled.addListener((details) => {
 chrome.runtime.onStartup.addListener(setup);
 
 chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && changes.lists) {
+    applyLists().catch((e) => logError({ src: 'background:lists', message: e.message, stack: e.stack }));
+  }
   if (area === 'local' && changes.disabledHosts) {
     syncAllowRules().catch((e) => logError({ src: 'background:sync', message: e.message, stack: e.stack }));
   }

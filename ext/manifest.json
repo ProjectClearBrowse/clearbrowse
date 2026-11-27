@@ -15,7 +15,10 @@
   "background": { "service_worker": "background.js" },
   "declarative_net_request": {
     "rule_resources": [
-      { "id": "ads", "enabled": true, "path": "rules.json" }
+      { "id": "ads", "enabled": true, "path": "rules.json" },
+      { "id": "easylist", "enabled": true, "path": "filters/easylist.json" },
+      { "id": "easyprivacy", "enabled": true, "path": "filters/easyprivacy.json" },
+      { "id": "annoyance", "enabled": false, "path": "filters/fanboy-annoyance.json" }
     ]
   },
   "content_scripts": [
