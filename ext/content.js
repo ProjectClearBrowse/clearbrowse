@@ -139,8 +139,16 @@
       if (!el.querySelector('img,video,canvas,picture,svg')) return false;
       return el.textContent.trim().length < 40;
     }
-    if (el.matches('img')) return /^(data:image|blob:)/.test(el.getAttribute('src') || '');
-    if (el.matches('video')) return /^blob:/.test(el.getAttribute('src') || '');
+    // data:/blob: の画像・動画は、外部サイトへのリンク内にあるものに限る
+    // (遅延読み込みのサムネイルなど、サイト自身の画像を誤って隠さないため)
+    if (el.matches('img') && /^(data:image|blob:)/.test(el.getAttribute('src') || '')) {
+      const a = el.closest('a[href]');
+      return !!a && isExternal(a.href);
+    }
+    if (el.matches('video') && /^blob:/.test(el.getAttribute('src') || '')) {
+      const a = el.closest('a[href]');
+      return !!a && isExternal(a.href);
+    }
     return false;
   }
 

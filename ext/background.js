@@ -95,6 +95,10 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
   if (changeInfo.status === 'loading') {
+    chrome.storage.session.get('since').then(({ since = {} }) => {
+      since[String(tabId)] = Date.now() - 1000;
+      return chrome.storage.session.set({ since });
+    }).catch(() => {});
     updateCounts((c) => { delete c[String(tabId)]; });
   }
 });

@@ -51,8 +51,12 @@ function setState(on) {
   const { counts = {} } = await chrome.storage.session.get('counts');
   $('count').textContent = String(counts[String(tab.id)] || 0);
   try {
-    const t = await chrome.action.getBadgeText({ tabId: tab.id });
-    $('netCount').textContent = String(parseInt(t, 10) || 0);
+    const { since = {} } = await chrome.storage.session.get('since');
+    const info = await chrome.declarativeNetRequest.getMatchedRules({
+      tabId: tab.id,
+      minTimeStamp: since[String(tab.id)] || 0,
+    });
+    $('netCount').textContent = String(info.rulesMatchedInfo.length);
   } catch (e) { /* 取得できない場合は 0 のまま */ }
 
   $('toggle').addEventListener('change', async () => {
