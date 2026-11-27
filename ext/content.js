@@ -101,6 +101,23 @@
     try { return new URL(url, location.href).origin !== location.origin; } catch (e) { return false; }
   }
 
+  // 同じサイトの別サブドメイン(例: www.google.com と ogs.google.com)は、第三者とみなさない
+  const SLD = /^(co|ne|or|ac|go|ed|ad|gr|lg)$/;
+  function siteOf(host) {
+    if (/^[\d.]+$/.test(host) || host.indexOf('.') < 0 || host.indexOf(':') >= 0) return null;
+    const p = host.split('.');
+    const n = p.length >= 3 && p[p.length - 1].length === 2 && SLD.test(p[p.length - 2]) ? 3 : 2;
+    return p.slice(-n).join('.');
+  }
+  function isThirdParty(url) {
+    try {
+      const u = new URL(url, location.href);
+      if (u.origin === location.origin) return false;
+      const a = siteOf(u.hostname), b = siteOf(location.hostname);
+      return !(a && b && a === b);
+    } catch (e) { return false; }
+  }
+
   function isFloatingAd(el) {
     if (!(el instanceof HTMLElement)) return false;
     if (el === document.body || el === root) return false;
@@ -116,8 +133,12 @@
       r.left <= 40 || r.right >= window.innerWidth - 40;
     if (!edge) return false;
 
+    // 入力欄・フォーム・メニューを含む固定表示は、サイト自身のヘッダーなどとみなして対象外にする
+    if (el.matches('input,textarea,select,form,nav,header,[role=search],[role=navigation]') ||
+        el.querySelector('input,textarea,select,form,nav,header,[role=search],[role=navigation]')) return false;
+
     const frames = el.matches('iframe') ? [el] : Array.from(el.querySelectorAll('iframe'));
-    if (frames.some((f) => f.src && isExternal(f.src))) return true;
+    if (frames.some((f) => f.src && isThirdParty(f.src))) return true;
 
     const hasMedia = !!el.querySelector('img,video,canvas,iframe,picture') || el.matches('img,video,canvas');
     if (!hasMedia) return false;
@@ -145,7 +166,7 @@
     if (!looksLikeBanner(r.width, r.height)) return false;
     const cs = getComputedStyle(el);
     if (cs.display === 'none' || cs.visibility === 'hidden') return false;
-    if (el.matches('iframe')) return !SAFE_FRAME.test(el.getAttribute('src') || '');
+    if (el.matches('iframe')) return !SAFE_FRAME.test(el.getAttribute('src') || '') && (!el.src || isThirdParty(el.src));
     if (el.matches('a[href]')) {
       if (!isExternal(el.href)) return false;
       if (!el.querySelector('img,video,canvas,picture,svg')) return false;
