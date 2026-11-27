@@ -63,8 +63,6 @@ function setState(on) {
     });
     const n = info.rulesMatchedInfo.length;
     $('netCount').textContent = String(n);
-    const mwh = n * 3; // 50KB x 60Wh/GB = 3mWh / 通信
-    $('energy').textContent = mwh >= 1000 ? (mwh / 1000).toFixed(2) + ' Wh' : mwh + ' mWh';
   } catch (e) { /* 取得できない場合は 0 のまま */ }
 
   $('toggle').addEventListener('change', async () => {
