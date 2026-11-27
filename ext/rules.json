@@ -72,12 +72,8 @@
       "resourceTypes": [
         "sub_frame",
         "script",
-        "image",
         "xmlhttprequest",
         "ping",
-        "media",
-        "stylesheet",
-        "font",
         "websocket",
         "other"
       ]

@@ -1,11 +1,11 @@
 const $ = (id) => document.getElementById(id);
 
 const FEATURE_DEFS = [
-  { key: 'popup', title: 'ポップアップ・新規タブの自動表示を止める', desc: 'クリックしていないのに開く別ウィンドウや別タブを防ぎます。ログイン用の小窓が開かないときは、このサイトだけ止めてください。' },
-  { key: 'overlay', title: '透明なクリック乗っ取りを防ぐ', desc: '画面全体を覆う透明な板で、クリックを広告に奪うしくみを取り除きます。' },
-  { key: 'floating', title: '画面の隅に固定された広告を消す', desc: '画面の端に張り付いて動かない、外部サイトの広告を取り除きます。' },
-  { key: 'inline', title: 'ページ内のバナー広告を消す', desc: '標準的な広告サイズのバナー枠を隠します。広告ではない表示が消えるときは、この項目を切ってください。' },
-  { key: 'ws', title: 'WebSocket で届く広告を止める', desc: '通常の通信を避けて配信される広告データを無視します。' },
+  { key: 'popup', title: 'ポップアップ・新規タブの自動表示をブロックする', desc: 'クリックしていないのに開く、別ウィンドウや別タブを防ぎます。ログイン用の小さなウィンドウが開かない場合は、そのサイトのみブロックを停止してください。' },
+  { key: 'overlay', title: '透明な板によるクリックの乗っ取りをブロックする', desc: '画面全体を覆う透明な板を取り除き、クリックが広告に奪われないようにします。' },
+  { key: 'floating', title: '画面の隅などに固定された広告を非表示にする', desc: '画面の端に固定されている、外部サイトの広告を非表示にします。' },
+  { key: 'inline', title: 'ページ内のバナー広告を非表示にする', desc: '標準的な広告サイズのバナーを非表示にします。広告ではない表示が消えてしまう場合は、この項目をオフにしてください。' },
+  { key: 'ws', title: 'WebSocket で配信される広告をブロックする', desc: '通常の通信とは別の方法で配信される広告データを、表示しないようにします。' },
 ];
 
 let features = {};
@@ -76,7 +76,7 @@ async function renderSites() {
   renderList(
     $('disabledList'),
     disabledHosts.map((h) => ({ label: h, host: h })),
-    'ブロックを止めているサイトはありません。',
+    'ブロックを停止しているサイトはございません。',
     async (it) => {
       const cur = (await chrome.storage.local.get({ disabledHosts: [] })).disabledHosts;
       await chrome.storage.local.set({ disabledHosts: cur.filter((h) => h !== it.host) });
@@ -89,7 +89,7 @@ async function renderSites() {
   renderList(
     $('hiddenList'),
     hosts.map((h) => ({ label: `${h}(${hiddenSelectors[h].length}件)`, host: h })),
-    '手動で消した広告はありません。',
+    '手動で非表示にした広告はございません。',
     async (it) => {
       const cur = (await chrome.storage.local.get({ hiddenSelectors: {} })).hiddenSelectors;
       delete cur[it.host];
@@ -138,10 +138,10 @@ async function copyReport() {
   const text = await buildReport();
   try {
     await navigator.clipboard.writeText(text);
-    status('報告文をコピーしました。メールや報告フォームに貼り付けてください。');
+    status('報告文をコピーいたしました。メールや報告ページに貼り付けて、お送りください。');
   } catch (e) {
     $('preview').closest('details').open = true;
-    status('コピーできませんでした。下のプレビューから手動でコピーしてください。');
+    status('コピーできませんでした。お手数ですが、下のプレビューから手動でコピーしてください。');
   }
 }
 
@@ -168,7 +168,7 @@ function setupReport() {
   }
   $('rClear').addEventListener('click', async () => {
     await chrome.storage.local.set({ errorLog: [] });
-    status('エラーログを消しました。');
+    status('エラーログを削除いたしました。');
     refreshPreview();
   });
 }

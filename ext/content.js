@@ -287,7 +287,7 @@
     const box = document.createElement('div');
     box.style.cssText = 'position:fixed;z-index:2147483647;pointer-events:none;border:2px solid #e11d48;background:rgba(225,29,72,.15);display:none';
     const tip = document.createElement('div');
-    tip.textContent = '消したい広告をクリック(Esc でキャンセル)';
+    tip.textContent = '消したい広告をクリックしてください(Esc キーで中止)';
     tip.style.cssText = 'position:fixed;z-index:2147483647;top:8px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:6px 12px;border-radius:6px;font:13px system-ui,sans-serif;pointer-events:none';
     root.append(box, tip);
 

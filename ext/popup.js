@@ -12,7 +12,7 @@ function hostOf(url) {
 
 function setState(on) {
   const el = $('state');
-  el.textContent = on ? 'ブロック中' : '停止中(このサイトでは何も止めません)';
+  el.textContent = on ? 'ブロック中' : '停止中(このサイトではブロックいたしません)';
   el.classList.toggle('off', !on);
 }
 
@@ -34,8 +34,8 @@ function setState(on) {
   const host = hostOf(tab && tab.url);
 
   if (!host) {
-    $('host').textContent = 'このページでは使えません';
-    $('state').textContent = 'ウェブサイト(http / https)のページで使えます。';
+    $('host').textContent = 'このページではご利用いただけません';
+    $('state').textContent = 'ウェブサイト(http / https)のページでご利用いただけます。';
     $('toggle').disabled = true;
     $('pick').disabled = true;
     $('reset').disabled = true;
@@ -50,6 +50,10 @@ function setState(on) {
 
   const { counts = {} } = await chrome.storage.session.get('counts');
   $('count').textContent = String(counts[String(tab.id)] || 0);
+  try {
+    const t = await chrome.action.getBadgeText({ tabId: tab.id });
+    $('netCount').textContent = String(parseInt(t, 10) || 0);
+  } catch (e) { /* 取得できない場合は 0 のまま */ }
 
   $('toggle').addEventListener('change', async () => {
     const checked = $('toggle').checked;
@@ -67,7 +71,7 @@ function setState(on) {
       window.close();
     } catch (e) {
       const m = $('pickMsg');
-      m.textContent = 'このページではまだ使えません。ページを再読み込みしてから、もう一度押してください。';
+      m.textContent = 'このページでは、まだご利用いただけません。ページを再読み込みしてから、もう一度押してください。';
       m.hidden = false;
     }
   });
